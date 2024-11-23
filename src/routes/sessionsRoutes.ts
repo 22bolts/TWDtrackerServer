@@ -85,7 +85,7 @@ router.post('/generate', async (req, res) => {
             clientEmail: email, // Store client email for reference
             otp,
             expiresAt,
-            clientId: client.id // Store client ID for easy access later
+            clientId: client.userID // Store client ID for easy access later
         });
         await newOTP.save();
 
