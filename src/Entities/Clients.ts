@@ -21,6 +21,7 @@ export class Clients extends BaseEntity {
     // @JoinColumn({ name: 'trainer_id' })
     // trainers!: Trainers[];
 
+    @ManyToMany(() => Trainers, (trainer) => trainer.clients)
     @JoinTable({
         name: 'client_trainer',
         joinColumn: { name: 'client_id', referencedColumnName: 'id' },

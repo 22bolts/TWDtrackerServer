@@ -6,13 +6,13 @@ export class OTP extends BaseEntity {
     id!: number;
 
     @Column()
-    email!: string;
+    clientId!: number;
+
+    @Column()
+    clientEmail!: string;
 
     @Column()
     otp!: string;
-    
-    @Column({ nullable: true })
-    trainerEmail!: string; // Optional: tracks which trainer worked with the client
 
     @CreateDateColumn()
     createdAt!: Date;
