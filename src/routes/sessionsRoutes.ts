@@ -10,13 +10,13 @@ import { Trainers } from '../Entities/Trainers';
 const router = Router();
 
 // Periodically delete expired OTPs (runs every 5 minutes)
-setInterval(async () => {
-    await OTP.createQueryBuilder()
-        .delete()
-        .where('expiresAt < :now', { now: new Date() })
-        .execute();
-    console.log('Expired OTPs cleaned up');
-}, 5 * 60 * 1000);
+// setInterval(async () => {
+//     await OTP.createQueryBuilder()
+//         .delete()
+//         .where('expiresAt < :now', { now: new Date() })
+//         .execute();
+//     console.log('Expired OTPs cleaned up');
+// }, 5 * 60 * 1000);
 
 // Generate OTP
 // router.post('/generate', async (req, res) => {
