@@ -7,8 +7,6 @@ import { json } from 'body-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { userRouter } from './routes/userRoutes';
-import { jobRouter } from './routes/jobRoutes';
-import { paymentRouter } from './routes/paymentRoutes';
 import dotenv from 'dotenv';
 
 // Import the entities
