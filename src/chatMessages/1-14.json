@@ -1,0 +1,41 @@
+[
+  {
+    "id": 14,
+    "content": "Ok then",
+    "timestamp": "2024-07-18T13:26:53.822Z"
+  },
+  {
+    "id": 1,
+    "content": "Can I see the dashboard?",
+    "timestamp": "2024-07-18T13:26:53.822Z"
+  },
+  {
+    "id": 14,
+    "content": "Here it is",
+    "timestamp": "2024-07-18T13:07:20.829Z",
+    "media": {
+      "type": "image",
+      "url": "/uploads/chat/image/Screenshot (212).png"
+    }
+  },
+  {
+    "id": 1,
+    "content": "Looks good",
+    "timestamp": "2024-07-18T14:30:06.653Z"
+  },
+  {
+    "id": 1,
+    "content": "Nice",
+    "timestamp": "2024-07-18T14:54:06.638Z"
+  },
+  {
+    "id": 1,
+    "content": "Nidsfsce",
+    "timestamp": "2024-07-18T14:55:13.794Z"
+  },
+  {
+    "id": 1,
+    "content": "Nidsfsce",
+    "timestamp": "2024-07-18T14:56:42.994Z"
+  }
+]

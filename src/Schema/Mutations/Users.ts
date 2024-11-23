@@ -5,6 +5,11 @@ import { Employees } from "../../Entities/Employees";
 import { Freelancers } from "../../Entities/Freelancers";
 import { Clients } from "../../Entities/Clients";
 import { getRepository } from "typeorm";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { Trainers } from "../../Entities/Trainers";
+
+const SECRET_KEY = "your_secret_key";
 
 export const CREATE_USER = {
     type: UserType,
@@ -30,52 +35,57 @@ export const CREATE_USER = {
         address: { type: GraphQLString }, // For clients
     },
     async resolve(parent: any, args: any) {
-        console.log('Resolver function executing:', args);
-        console.log("ajkdsnks");
-        const requiredFields = ['email', 'password', 'role', 'first_name', 'last_name'];
+        const requiredFields = ['email', 'password', 'role', 'first_name', 'last_name', 'usertag'];
         const missingFields = requiredFields.filter(field => !(field in args));
         if (missingFields.length > 0) {
-            console.error('Missing required fields:', missingFields);
-            throw new Error('Missing required fields. Please provide all required information.');
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
-
         const { email, password, phone_number, role, first_name, middle_name, last_name, usertag, status, avatar } = args;
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         try {
-            const user = await Users.create({ email, password, phone_number, role, first_name, middle_name, last_name, usertag, status, avatar }).save();
+            const user = await Users.create({
+                email,
+                password: hashedPassword,
+                phone_number,
+                role,
+                first_name,
+                middle_name,
+                last_name,
+                avatar
+            }).save();
 
             if (role.toUpperCase() === 'EMPLOYEE') {
                 const { position, managerID, department } = args;
                 const employee = await Employees.create({
                     userID: user.id,
-                    department,
                     position,
-                    managerID,
                     salary: 0, // Default salary, adjust as needed
                 }).save();
                 user.employee = employee;
-            } else if (role.toUpperCase() === 'FREELANCER') {
-                const { skills, portfolio_Link, availabilityStatus, hourly_Rate } = args;
-                const freelancer = await Freelancers.create({
+            } else if (role.toUpperCase() === 'TRAINER') {
+                const { companyName, address } = args;
+                const trainer = await Trainers.create({
                     userID: user.id,
-                    skills,
-                    portfolio_Link,
-                    availabilityStatus,
-                    hourly_Rate,
                 }).save();
-                user.freelancer = freelancer;
+                user.trainer = trainer;
             }
             else if (role.toUpperCase() === 'CLIENT') {
-                const { companyName, address, phone } = args;
+                const { companyName, address } = args;
                 const client = await Clients.create({
                     userID: user.id,
-                    companyName,
                     address,
                 }).save();
                 user.client = client;
             }
 
-            return user;
+            // Generate auth token
+            const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: '1h' });
+
+            return { user, token };
         } catch (error) {
             console.error("Failed to create user:", error);
             throw new Error("Unable to create user at this time. Please try again later.");
@@ -93,12 +103,10 @@ export const SIGN_IN = {
     async resolve(parent: any, args: any) {
         const { email, password } = args;
 
-        // Check if required fields are present
         const requiredFields = ['email', 'password'];
         const missingFields = requiredFields.filter(field => !(field in args));
         if (missingFields.length > 0) {
-            console.error('Missing required fields:', missingFields);
-            throw new Error('Missing required fields. Please provide all required information.');
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
         try {
@@ -108,12 +116,14 @@ export const SIGN_IN = {
                 throw new Error("User not found");
             }
 
-            // Check if the password is correct (you should use proper hashing and comparison in a real application)
-            if (password !== user.password) {
+            const validPassword = await bcrypt.compare(password, user.password);
+            if (!validPassword) {
                 throw new Error("Incorrect password");
             }
 
-            return user;
+            const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: '1h' });
+
+            return { user, token };
         } catch (error: any) {
             console.error("Failed to sign in:", error);
             throw new Error(error.message);

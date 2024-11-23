@@ -14,13 +14,7 @@ export class Employees extends BaseEntity {
     user!: Users;
 
     @Column()
-    department!: string;
-
-    @Column()
     position!: string;
-
-    @Column()
-    managerID!: number; // If applicable, Foreign Key referencing Employees table for hierarchical structure
 
     @Column()
     salary!: number;

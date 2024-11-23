@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from 'typeorm';
+import { Orders } from './Orders';
 
 @Entity()
 export class Services extends BaseEntity {
@@ -12,11 +13,11 @@ export class Services extends BaseEntity {
     description!: string;
 
     @Column()
-    type!: string; // 'basic', 'advanced', 'royalty'
-
-    @Column()
     price!: number;
 
     @Column()
-    royaltyLevels!: string; // If applicable, define the structure for royalty levels
+    duration!: string;
+
+    @OneToMany(() => Orders, order => order.service)
+    orders!: Orders[];
 }

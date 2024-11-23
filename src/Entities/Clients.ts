@@ -7,15 +7,12 @@ export class Clients extends BaseEntity {
     id!: number;
 
     @Column()
-    userID!: number; // Foreign Key referencing Users table
+    userID!: number;
 
-    @OneToOne(() => Users, user => user.client)
-    @JoinColumn()
+    @OneToOne(() => Users, (user) => user.client)
+    @JoinColumn({ name: 'userID' })
     user!: Users;
 
-    @Column()
-    companyName!: string;
-
-    @Column()
-    address!: string;
+    @Column({ nullable: true })
+    phone!: string;
 }

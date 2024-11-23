@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, OneToMany } from 'typeorm';
+import { Users } from './Users';
+import { Services } from './Services';
 import { Transactions } from './Transactions';
 
 @Entity()
@@ -7,37 +9,28 @@ export class Orders extends BaseEntity {
     id!: number;
 
     @Column()
-    userID!: number; // Foreign Key referencing Users table
+    service_type!: string;
 
     @Column()
-    serviceID!: number; // Foreign Key referencing Services table
+    description!: string;
 
     @Column()
-    orderDate!: Date;
+    status!: string;
 
     @Column()
-    status!: string; // 'pending', 'in progress', 'completed', 'cancelled'
+    total_amount!: number;
 
-    @Column()
-    totalPrice!: number;
-    
-    @Column()
-    balance!: number;
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    created_at!: Date;
 
-    @Column({ nullable: true }) // Make the 'level' column nullable
-    level!: string;
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+    updated_at!: Date;
 
-    @Column()
-    orderType!: string; // 'freelancing', 'company'
+    @ManyToOne(() => Users, user => user.orders)
+    user!: Users;
 
-    @Column({ nullable: true })
-    employeeID!: number; // Foreign Key referencing Employees table, nullable for freelancing orders
-
-    @Column({ nullable: true })
-    freelancerID!: number; // Foreign Key referencing Freelancers table, nullable for company orders
-
-    @Column({ nullable: true })
-    completionDate!: Date; // Add completion date column
+    @ManyToOne(() => Services, service => service.orders)
+    service!: Services;
 
     @OneToMany(() => Transactions, transaction => transaction.order)
     transactions!: Transactions[];

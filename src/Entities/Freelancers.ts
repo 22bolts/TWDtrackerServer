@@ -9,17 +9,13 @@ export class Freelancers extends BaseEntity {
     @Column()
     userID!: number; // Foreign Key referencing Users table
 
-    @OneToOne(() => Users, user => user.freelancer)
-    @JoinColumn()
-    user!: Users;
-
     @Column("text", { array: true, nullable: true })
     skills!: string[] | null; // Store skills as JSON array
 
-    @Column()
+    @Column({ nullable: true })
     portfolio_Link!: string;
 
-    @Column()
+    @Column({ nullable: true })
     availabilityStatus!: string; // 'available', 'busy'
 
     @Column()

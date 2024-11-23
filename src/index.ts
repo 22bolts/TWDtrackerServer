@@ -1,132 +1,173 @@
-import express, { Application } from "express";
-import { Request, Response, NextFunction } from 'express';
-
-import { ApolloServer } from "apollo-server-express";
-import multer from "multer";
-// import nodemailer from "nodemailer";
-// import nodemailer from 'nodemailer'
-// import Mail from "nodemailer/lib/mailer";
-// import nodemailer from 'nodemailer';
-import nodemailer from 'nodemailer';
-
-import { fileStorage, fileFilter } from "./config/multer";
-
-import { schema } from "./Schema";
-
-import cors from 'cors'
-import { createConnection } from "typeorm";
+// src/server.ts
+import express, { Application, Request, Response } from 'express';
+import { getRepository } from 'typeorm';
+import cors from 'cors';
+import { createConnection } from 'typeorm';
+import { json } from 'body-parser';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { userRouter } from './routes/userRoutes';
+import { jobRouter } from './routes/jobRoutes';
+import { paymentRouter } from './routes/paymentRoutes';
 import dotenv from 'dotenv';
+
+// Import the entities
+import { Users } from './Entities/Users';
+import { Employees } from './Entities/Employees';
+import { Clients } from './Entities/Clients';
+
+import fs from 'fs';
+import path from 'path';
+import { Socket } from 'dgram';
+
+import jwt from 'jsonwebtoken';
+import { Trainers } from './Entities/Trainers';
+import { OTP } from './Entities/OTP';
+import { Sessions } from './Entities/Sessions';
+import { sessionRouter } from './routes/sessionsRoutes';
+
+const chatBasePath = path.join(__dirname, '..', 'chatMessages');
 
 // Load environment variables
 dotenv.config();
 
-//  Tables
-import { Users } from "./Entities/Users";
-import { Employees } from "./Entities/Employees";
-import { Freelancers } from "./Entities/Freelancers";
-import { Clients } from "./Entities/Clients";
-import { Instructors } from "./Entities/Instructors";
-import { Services } from "./Entities/Services";
-import { Orders } from "./Entities/Orders";
-import { Transactions } from "./Entities/Transactions";
-import { Discounts } from "./Entities/Discounts";
-import { Courses } from "./Entities/Courses";
-import { APIOrders } from "./Entities/APIOrders";
-import { APITemplates } from "./Entities/APITemplates";
-import { APIUsers } from "./Entities/APIUsers";
-
-
-
-const main = async () => {
-    await createConnection({
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        database: 'everythingcodesDB',
-        username: 'postgres',
-        password: '1234567890',
-        logging: true,
-        synchronize: false,
-        entities: [Users, Employees, Freelancers, Clients,
-            Instructors, Courses, Services, Orders, Transactions, Discounts, APIOrders, APITemplates, APIUsers]
-    })
-    const app: Application = express();
-    app.use(cors())
-    app.use(express.json())
-
-    // Route for file upload using the Multer configurations
-    const upload = multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'); // Use single() for a single file upload
-
-    // app.post('/upload', (req: Request, res: Response, next: NextFunction) => {
-    //     upload(req, res, (err: any) => {
-    //         if (err) {
-    //             // Handle multer error
-    //             console.log({error: err.message})
-    //             return res.status(400).json({ error: err.message });
-    //         }
-    //         // File uploaded successfully
-    //         res.status(200).json({ message: 'File uploaded successfully!' });
-    //     });
-    // });
-
-    app.post('/upload', (req: any, res: Response, next: NextFunction) => {
-        upload(req, res, (err: any) => {
-            if (err) {
-                return res.status(400).json({ error: err.message });
-            }
-            // Assuming the file is saved in the 'uploads' directory
-            const filePath = `uploads/${req.file.filename}`;
-            res.status(200).json({ message: 'File uploaded successfully!', filePath });
+const connectDB = async () => {
+    try {
+        await createConnection({
+            type: 'postgres',
+            host: 'svgjfhsqggolnipsgzjz.db.eu-central-1.nhost.run', // Extracted from the connection string
+            port: 5432, // Default PostgreSQL port
+            username: 'postgres', // From the connection string
+            password: 'bD73V7JGVap2s5pr', // Replace with the actual password from your connection string
+            database: 'svgjfhsqggolnipsgzjz', // From the connection string
+            entities: [
+                Employees, Trainers, Users, Clients, OTP, Sessions
+            ],
+            synchronize: false, // Set to false in production
+            logging: false,
+            schema: "public"
         });
-    });
+        console.log('Database connected');
+    } catch (error) {
+        console.error('Database connection error:', error);
+        process.exit(1); // Exit process with failure
+    }
+};
 
-    
-    // Serve static files from the 'uploads' directory
-    app.use('/uploads', express.static('uploads'));
+// Initialize Express application
+const app: Application = express();
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
 
-    // Email sending setup
-    app.post('/send-email', async (req: Request, res: Response) => {
-        const { name, email, phone, message } = req.body;
-    
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-    
-        const mailOptions = {
-          from: email,
-          to: 'bguy00504@gmail.com', // Replace with the recipient's email address
-          subject: `Message from ${name}`,
-          text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nMessage:\n${message}`,
-        };
-    
-        try {
-          await transporter.sendMail(mailOptions);
-          res.status(200).json({ message: 'Email sent successfully!' });
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ error: 'Failed to send email' });
-        }
-    });
-    
+// Middleware
+app.use(cors());
+app.use(json());
 
-    // Create an instance of ApolloServer
-    const server = new ApolloServer({schema,});
+// Routes
+app.use('/api/users', userRouter);
+app.use('/api/sessions', sessionRouter);
 
-    // Apply the Apollo GraphQL middleware to your Express app
-    await server.start();
-    server.applyMiddleware({ app : app as any, path: '/graphql' });
+app.get('/api/get-token', (req, res) => {
+    const API_KEY = '9fe47244-ae0a-4308-bb5f-ab3434d0c37d';
+    const SECRET = '44b81290fc3229b820cbd811763b61a51ff0ef84d4ebd78afa09bbaad5db22a0';
 
-    const PORT = process.env.PORT || 3001;
+    const payload = {
+        apikey: API_KEY,
+        permissions: ['allow_join'], // `ask_join` || `allow_mod`
+        version: 2,
+        roomId: '2kyv-gzay-64pg', // OPTIONAL
+        participantId: 'lxvdplwt', // OPTIONAL 
+        roles: ['crawler', 'rtc'], // OPTIONAL
+    };
 
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+    const options = { 
+        expiresIn: '120m', 
+        algorithm: 'HS256'
+    };
+
+    try {
+        
+        const token = jwt.sign(payload, SECRET, { expiresIn: '120m', algorithm: 'HS256' });
+        console.log("Token stuff is:", token);
+        res.json({ token });
+    } catch (error) {
+        console.error('Error generating token:', error);
+        res.status(500).json({ error: 'Failed to generate token' });
+    }
+});
+
+const API_KEY = '9fe47244-ae0a-4308-bb5f-ab3434d0c37d';
+const SECRET_KEY = '44b81290fc3229b820cbd811763b61a51ff0ef84d4ebd78afa09bbaad5db22a0';
+
+
+app.post('/get-token', (req, res) => {
+    const payload = {
+      apikey: API_KEY,
+      permissions: ['allow_join', 'allow_mod'], // Add permissions as needed
+      version: 2,
+      roomId: req.body.roomId || Math.random().toString(36).substring(2, 7),
+      participantId: req.body.participantId || Math.random().toString(36).substring(2, 7)
+    };
+  
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '24h' });
+    res.json({ token });
+});
+
+// Default route
+app.get('/', (req: Request, res: Response) => {
+    res.send('Welcome to EverythingCodes API');
+});
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Track online users
+const onlineUsers = new Map<string, string>();
+
+// Helper functions
+const ensureDirectoryExistence = (filePath: string) => {
+    const dirname = path.dirname(filePath);
+    if (fs.existsSync(dirname)) {
+        return true;
+    }
+    ensureDirectoryExistence(dirname);
+    fs.mkdirSync(dirname);
+};
+
+const appendMessageToFile = (filePath: string, message: object) => {
+    let messages: object[] = [];
+    if (fs.existsSync(filePath)) {
+        messages = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+    messages.push(message);
+    fs.writeFileSync(filePath, JSON.stringify(messages, null, 2));
+};
+
+interface CallData {
+    signalData: any;
+    userId: string;
+    recipientId?: string;
+    callId?: string;
 }
 
-main().catch((err) => {
-    console.log(err);
-})
+const calls = new Map<string, CallData[]>();
+
+// Socket.io connection
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    await connectDB();
+});
+
+const getChatFilePath = (userId: string, recipientId: string): string => {
+    return path.join(chatBasePath, userId, `${recipientId}.json`);
+};

@@ -1,0 +1,118 @@
+[
+  {
+    "id": 1,
+    "content": "So u make apps right?",
+    "timestamp": "2024-07-18T12:47:40.829Z"
+  },
+  {
+    "id": 15,
+    "content": "Yes, do u need one made?",
+    "timestamp": "2024-07-18T12:48:05.295Z"
+  },
+  {
+    "id": 1,
+    "content": "Can u do this? it's sort of hard to tell but it's a real estate app",
+    "timestamp": "2024-07-18T12:49:10.829Z",
+    "media": {
+      "type": "image",
+      "url": "/uploads/chat/image/brian-mcgowan-WJ0WWNdmJ3Y-unsplash.jpg"
+    }
+  },
+  {
+    "id": 15,
+    "content": "Absolutely. What kind of app is it?",
+    "timestamp": "2024-07-18T12:50:00.295Z"
+  },
+  {
+    "id": 1,
+    "content": "It's a task management app for teams. I want it to have features like this.",
+    "timestamp": "2024-07-18T12:51:10.829Z"
+  },
+  {
+    "id": 1,
+    "content": "Here's a sketch of the main screen.",
+    "timestamp": "2024-07-18T12:52:05.295Z",
+    "media": {
+      "type": "image",
+      "url": "/uploads/chat/image/1721168490001-Main_screen_sketch.png"
+    }
+  },
+  {
+    "id": 15,
+    "content": "Looks good. Do you want a web app or a mobile app?",
+    "timestamp": "2024-07-18T12:53:20.829Z"
+  },
+  {
+    "id": 1,
+    "content": "Both would be great, but let's start with mobile.",
+    "timestamp": "2024-07-18T12:54:30.295Z"
+  },
+  {
+    "id": 15,
+    "content": "Sure. Which platforms are you targeting?",
+    "timestamp": "2024-07-18T12:55:40.829Z"
+  },
+  {
+    "id": 1,
+    "content": "iOS and Android.",
+    "timestamp": "2024-07-18T12:56:50.295Z"
+  },
+  {
+    "id": 15,
+    "content": "Got it. Here’s a wireframe for the login screen. What do you think?",
+    "timestamp": "2024-07-18T12:57:20.829Z",
+    "media": {
+      "type": "image",
+      "url": "/uploads/chat/image/Screenshot (213).png"
+    }
+  },
+  {
+    "id": 1,
+    "content": "Looks great. Wow that was fast",
+    "timestamp": "2024-07-18T12:58:30.295Z"
+  },
+  {
+    "id": 15,
+    "content": "I'll start working on the prototype. Do you have any preferences for the tech stack?",
+    "timestamp": "2024-07-18T13:01:20.829Z"
+  },
+  {
+    "id": 1,
+    "content": "React Native for the mobile app would be great.",
+    "timestamp": "2024-07-18T13:02:30.295Z"
+  },
+  {
+    "id": 15,
+    "content": "Perfect. I'll use React Native. Should we integrate any third-party services?",
+    "timestamp": "2024-07-18T13:03:40.829Z"
+  },
+  {
+    "id": 1,
+    "content": "Yes, we should integrate Firebase for authentication and Firestore for the database.",
+    "timestamp": "2024-07-18T13:04:50.295Z"
+  },
+  {
+    "id": 15,
+    "content": "Got it. I'll keep you updated with progress screenshots.",
+    "timestamp": "2024-07-18T13:05:20.829Z"
+  },
+  {
+    "id": 1,
+    "content": "Great, thanks!",
+    "timestamp": "2024-07-18T13:06:30.295Z"
+  },
+  {
+    "id": 15,
+    "content": "Here's the initial Dashboard design.",
+    "timestamp": "2024-07-18T13:07:20.829Z",
+    "media": {
+      "type": "image",
+      "url": "/uploads/chat/image/Screenshot (212).png"
+    }
+  },
+  {
+    "id": 1,
+    "content": "That looks awesome! I'll generate an official project now sorry about the delay in doing that",
+    "timestamp": "2024-07-18T13:15:28.281Z"
+  }
+]
