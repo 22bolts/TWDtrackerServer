@@ -41,8 +41,8 @@ const connectDB = async () => {
             entities: [
                 Employees, Trainers, Users, Clients, OTP, Sessions
             ],
-            synchronize: false, // Set to false in production
-            logging: false,
+            synchronize: true, // Set to false in production
+            logging: true,
             schema: "public"
         });
         console.log('Database connected');

@@ -251,4 +251,62 @@ router.post('/set-pin', async (req, res) => {
     }
 });
 
+// Route to get all trainers
+router.get('/trainers', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const trainers = await Trainers.find({ relations: ['user'] });
+        res.status(200).json(trainers);
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to fetch trainers', error });
+    }
+});
+
+// Route to get all clients
+router.get('/clients', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const clients = await Clients.find({ relations: ['user'] });
+        res.status(200).json(clients);
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to fetch clients', error });
+    }
+});
+
+// Route to get a single trainer by ID
+router.get('/trainers/:id', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const trainerId = parseInt(req.params.id, 10);
+        if (isNaN(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainer ID' });
+        }
+
+        const trainer = await Trainers.findOne({ where: { id: trainerId }, relations: ['user'] });
+        if (!trainer) {
+            return res.status(404).json({ message: 'Trainer not found' });
+        }
+
+        res.status(200).json(trainer);
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to fetch trainer', error });
+    }
+});
+
+// Route to get a single client by ID
+router.get('/clients/:id', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const clientId = parseInt(req.params.id, 10);
+        if (isNaN(clientId)) {
+            return res.status(400).json({ message: 'Invalid client ID' });
+        }
+
+        const client = await Clients.findOne({ where: { id: clientId }, relations: ['user'] });
+        if (!client) {
+            return res.status(404).json({ message: 'Client not found' });
+        }
+
+        res.status(200).json(client);
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to fetch client', error });
+    }
+});
+
 export { router as userRouter };

@@ -62,6 +62,68 @@ router.post('/generate', async (req, res) => {
 });
 
 // Validate OTP and Create Session
+// router.post('/validate', async (req, res) => {
+//     const { email, otp } = req.body;
+
+//     if (!email || !otp) {
+//         return res.status(400).json({ message: 'Email and OTP are required' });
+//     }
+
+//     try {
+//         // Verify the OTP
+//         const validOTP = await OTP.findOne({ where: { email, otp } });
+
+//         if (!validOTP) {
+//             return res.status(400).json({ message: 'Invalid OTP' });
+//         }
+
+//         if (validOTP.expiresAt < new Date()) {
+//             await OTP.delete({ id: validOTP.id });
+//             return res.status(400).json({ message: 'OTP expired' });
+//         }
+
+//         // Fetch trainer email from OTP record
+//         const trainerEmail = validOTP.trainerEmail;
+
+//         if (!trainerEmail) {
+//             return res.status(400).json({ message: 'Trainer email not found in OTP' });
+//         }
+
+//         // Delete the OTP (used or validated)
+//         await OTP.delete({ id: validOTP.id });
+
+//         // Check if both client and trainer exist
+//         const client = await Clients.createQueryBuilder('client')
+//             .innerJoinAndSelect('client.user', 'user')
+//             .where('user.email = :email', { email })
+//             .getOne();
+
+//         const trainer = await Trainers.createQueryBuilder('trainer')
+//             .innerJoinAndSelect('trainer.user', 'user')
+//             .where('user.email = :email', { email: trainerEmail })
+//             .getOne();
+
+//         if (!client || !trainer) {
+//             return res.status(404).json({ message: 'Client or Trainer not found' });
+//         }
+
+//         // Create a new session record
+//         const session = await Sessions.create({
+//             clientId: client.id,
+//             trainerId: trainer.id,
+//             email: email,
+//             trainerEmail: trainerEmail,
+//             startedAt: new Date(), // Mark session start time
+//         });
+//         await session.save();
+
+//         res.status(200).json({ message: 'OTP validated and session started successfully', session });
+//     } catch (error) {
+//         console.error('Error validating OTP:', error);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// });
+
 router.post('/validate', async (req, res) => {
     const { email, otp } = req.body;
 
@@ -107,6 +169,14 @@ router.post('/validate', async (req, res) => {
             return res.status(404).json({ message: 'Client or Trainer not found' });
         }
 
+        // Add trainer to client's trainers list and client to trainer's clients list
+        client.trainers = [...client.trainers, trainer];
+        trainer.clients = [...trainer.clients, client];
+
+        // Save updated client and trainer entities
+        await client.save();
+        await trainer.save();
+
         // Create a new session record
         const session = await Sessions.create({
             clientId: client.id,
@@ -123,6 +193,7 @@ router.post('/validate', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 router.post('/confirm-session', async (req, res) => {
     const { email, sessionId, pin } = req.body;
@@ -162,15 +233,45 @@ router.post('/confirm-session', async (req, res) => {
         // Step 3: Mark the session as completed
         session.status = 'completed';
         session.completedAt = new Date();
-
         await session.save();
 
-        res.status(200).json({ message: 'Session confirmed and completed successfully' });
+        // Step 4: Fetch the client and trainer entities
+        const client = await Clients.createQueryBuilder('client')
+            .innerJoinAndSelect('client.user', 'user')
+            .where('user.email = :email', { email: session.email })
+            .getOne();
+
+        const trainer = await Trainers.createQueryBuilder('trainer')
+            .innerJoinAndSelect('trainer.user', 'user')
+            .where('user.email = :email', { email: session.trainerEmail })
+            .getOne();
+
+        if (!client || !trainer) {
+            return res.status(404).json({ message: 'Client or Trainer not found' });
+        }
+
+        // Step 5: Add the trainer to the client's list and the client to the trainer's list
+        if (!client.trainers) client.trainers = [];
+        if (!trainer.clients) trainer.clients = [];
+
+        // Check if they are already associated
+        if (!client.trainers.some((t) => t.id === trainer.id)) {
+            client.trainers.push(trainer);
+            await client.save();
+        }
+
+        if (!trainer.clients.some((c) => c.id === client.id)) {
+            trainer.clients.push(client);
+            await trainer.save();
+        }
+
+        res.status(200).json({ message: 'Session confirmed and completed successfully, associations updated' });
     } catch (error) {
         console.error('Error confirming session:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 
 /**
