@@ -1,7 +1,6 @@
 import { GraphQLObjectType, GraphQLSchema } from "graphql";
 import { CREATE_USER, SIGN_IN } from "./Mutations/Users";
 import { GET_ALL_USERS, GET_USER_BY_ID } from "./Queries/User";
-import { CREATE_ORDER, UPDATE_BALANCE } from "./Mutations/Orders";
 // import { CREATE_TRANSACTION } from "./Mutations/Transactions";
 
 const RootQuery = new GraphQLObjectType({
