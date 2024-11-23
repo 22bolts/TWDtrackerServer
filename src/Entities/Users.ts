@@ -27,15 +27,6 @@ export class Users extends BaseEntity {
     full_name!: string;
 
     @Column({ nullable: true })
-    first_name!: string;
-
-    @Column({ nullable: true })
-    middle_name!: string;
-
-    @Column()
-    last_name!: string;
-
-    @Column({ nullable: true })
     avatar!: string;
 
     @Column({ type: 'json', default: {} })
