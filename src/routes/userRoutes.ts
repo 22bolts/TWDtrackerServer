@@ -443,11 +443,46 @@ router.get('/clients/:id', authenticateJWT, async (req: Request, res: Response) 
     }
 });
 
-router.get('/clients/:clientId/trainers', async (req, res) => {
-    const { clientId } = req.params;
+// router.get('/clients/:clientId/trainers', async (req, res) => {
+//     const { clientId } = req.params;
+
+//     try {
+//         // Fetch client with trainers
+//         const client = await Clients.createQueryBuilder('client')
+//             .leftJoinAndSelect('client.trainers', 'trainer')
+//             .leftJoinAndSelect('trainer.user', 'user') // Include user data
+//             .where('client.id = :id', { id: clientId })
+//             .getOne();
+
+//         if (!client) {
+//             return res.status(404).json({ message: 'Client not found' });
+//         }
+
+//         // Return the trainers
+//         res.status(200).json({ trainers: client.trainers });
+//     } catch (error) {
+//         console.error('Error fetching client trainers:', error);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// });
+
+router.get('/clients/:userId/trainers', async (req, res) => {
+    const { userId } = req.params;
 
     try {
-        // Fetch client with trainers
+        // Fetch the client ID from the Users table
+        const user = await Users.createQueryBuilder('user')
+            .leftJoinAndSelect('user.client', 'client') // Join client
+            .where('user.id = :id', { id: userId })
+            .getOne();
+
+        if (!user || !user.client) {
+            return res.status(404).json({ message: 'Client not found for the provided user ID' });
+        }
+
+        const clientId = user.client.id;
+
+        // Fetch trainers for the client
         const client = await Clients.createQueryBuilder('client')
             .leftJoinAndSelect('client.trainers', 'trainer')
             .leftJoinAndSelect('trainer.user', 'user') // Include user data
@@ -458,19 +493,53 @@ router.get('/clients/:clientId/trainers', async (req, res) => {
             return res.status(404).json({ message: 'Client not found' });
         }
 
-        // Return the trainers
         res.status(200).json({ trainers: client.trainers });
     } catch (error) {
-        console.error('Error fetching client trainers:', error);
+        console.error('Error fetching trainers for client:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-router.get('/trainers/:trainerId/clients', async (req, res) => {
-    const { trainerId } = req.params;
+// router.get('/trainers/:trainerId/clients', async (req, res) => {
+//     const { trainerId } = req.params;
+
+//     try {
+//         // Fetch trainer with clients
+//         const trainer = await Trainers.createQueryBuilder('trainer')
+//             .leftJoinAndSelect('trainer.clients', 'client')
+//             .leftJoinAndSelect('client.user', 'user') // Include user data
+//             .where('trainer.id = :id', { id: trainerId })
+//             .getOne();
+
+//         if (!trainer) {
+//             return res.status(404).json({ message: 'Trainer not found' });
+//         }
+
+//         // Return the clients
+//         res.status(200).json({ clients: trainer.clients });
+//     } catch (error) {
+//         console.error('Error fetching trainer clients:', error);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// });
+
+router.get('/trainers/:userId/clients', async (req, res) => {
+    const { userId } = req.params;
 
     try {
-        // Fetch trainer with clients
+        // Fetch the trainer ID from the Users table
+        const user = await Users.createQueryBuilder('user')
+            .leftJoinAndSelect('user.trainer', 'trainer') // Join trainer
+            .where('user.id = :id', { id: userId })
+            .getOne();
+
+        if (!user || !user.trainer) {
+            return res.status(404).json({ message: 'Trainer not found for the provided user ID' });
+        }
+
+        const trainerId = user.trainer.id;
+
+        // Fetch clients for the trainer
         const trainer = await Trainers.createQueryBuilder('trainer')
             .leftJoinAndSelect('trainer.clients', 'client')
             .leftJoinAndSelect('client.user', 'user') // Include user data
@@ -481,12 +550,12 @@ router.get('/trainers/:trainerId/clients', async (req, res) => {
             return res.status(404).json({ message: 'Trainer not found' });
         }
 
-        // Return the clients
         res.status(200).json({ clients: trainer.clients });
     } catch (error) {
-        console.error('Error fetching trainer clients:', error);
+        console.error('Error fetching clients for trainer:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 export { router as userRouter };
