@@ -174,25 +174,154 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.put('/:id', async (req: any, res: Response) => {
-    try {
-        await Users.update(req.params.id, req.body);
-        const user = await Users.findOne({ where: {id: req.params.id}});
+// router.put('/:id', async (req: any, res: Response) => {
+//     try {
+//         await Users.update(req.params.id, req.body);
+//         const user = await Users.findOne({ where: {id: req.params.id}});
         
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
+
+//         // Generate JWT token
+//         const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
+
+//         res.json({ token, data:{id: user.id, full_name: user.full_name, email: user.email,
+//             role: user.role, phone_number: user.phone_number, avatar: user.avatar} });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ message: 'Unable to update user', error });
+//     }
+// });
+
+// router.put('/:id', upload.single('avatar'), async (req: Request, res: Response) => {
+//     try {
+//         const userId = parseInt(req.params.id, 10);
+//         if (isNaN(userId)) {
+//             return res.status(400).json({ message: 'Invalid user ID' });
+//         }
+
+//         const user = await Users.findOne({ where: { id: userId } });
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
+
+//         const { email, phone_number, full_name } = req.body;
+//         const updates: Partial<Users> = {};
+
+//         if (email) updates.email = email;
+//         if (phone_number) updates.phone_number = phone_number;
+//         if (full_name) updates.full_name = full_name;
+
+//         // Handle avatar update if file is provided
+//         if (req.file) {
+//             const avatarPath = `/uploads/profile/${req.file.filename}`;
+//             updates.avatar = avatarPath;
+
+//             // Delete old avatar file if it exists
+//             if (user.avatar) {
+//                 const oldAvatarPath = path.join(__dirname, '..', '..', user.avatar);
+//                 if (fs.existsSync(oldAvatarPath)) {
+//                     fs.unlinkSync(oldAvatarPath);
+//                 }
+//             }
+//         }
+
+//         // Update user details
+//         await Users.update(userId, updates);
+
+//         // Fetch updated user
+//         const updatedUser = await Users.findOne({ where: { id: userId } });
+
+//         // Generate a new JWT token with updated details
+//         const token = jwt.sign(
+//             { id: updatedUser!.id, email: updatedUser!.email, role: updatedUser!.role },
+//             secretKey,
+//             { expiresIn: '1h' }
+//         );
+
+//         res.json({
+//             token,
+//             data: {
+//                 id: updatedUser!.id,
+//                 full_name: updatedUser!.full_name,
+//                 email: updatedUser!.email,
+//                 role: updatedUser!.role,
+//                 phone_number: updatedUser!.phone_number,
+//                 avatar: updatedUser!.avatar,
+//             },
+//         });
+//     } catch (error) {
+//         console.error('Error updating user:', error);
+//         res.status(500).json({ message: 'Unable to update user', error });
+//     }
+// });
+
+router.put('/:id', upload.single('avatar'), async (req: Request, res: Response) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+        if (isNaN(userId)) {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+
+        const user = await Users.findOne({ where: { id: userId } });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
+        const { email, phone_number, full_name, isAvatarUpdated } = req.body;
+        const updates: Partial<Users> = {};
 
-        res.json({ token, data:{id: user.id, full_name: user.full_name, email: user.email,
-            role: user.role, phone_number: user.phone_number, avatar: user.avatar} });
+        // Update other user details if provided
+        if (email) updates.email = email;
+        if (phone_number) updates.phone_number = phone_number;
+        if (full_name) updates.full_name = full_name;
+
+        // Update avatar only if isAvatarUpdated flag is true and a file is provided
+        if (isAvatarUpdated === 'true' && req.file) {
+            const avatarPath = `/uploads/profile/${req.file.filename}`;
+            updates.avatar = avatarPath;
+
+            // Delete old avatar file if it exists
+            if (user.avatar) {
+                const oldAvatarPath = path.join(__dirname, '..', '..', user.avatar);
+                if (fs.existsSync(oldAvatarPath)) {
+                    fs.unlinkSync(oldAvatarPath);
+                }
+            }
+        }
+
+        // Update user details in the database
+        await Users.update(userId, updates);
+
+        // Fetch updated user
+        const updatedUser = await Users.findOne({ where: { id: userId } });
+
+        // Generate a new JWT token with updated details
+        const token = jwt.sign(
+            { id: updatedUser!.id, email: updatedUser!.email, role: updatedUser!.role },
+            secretKey,
+            { expiresIn: '1h' }
+        );
+
+        res.json({
+            token,
+            data: {
+                id: updatedUser!.id,
+                full_name: updatedUser!.full_name,
+                email: updatedUser!.email,
+                role: updatedUser!.role,
+                phone_number: updatedUser!.phone_number,
+                avatar: updatedUser!.avatar,
+            },
+        });
     } catch (error) {
-        console.log(error);
+        console.error('Error updating user:', error);
         res.status(500).json({ message: 'Unable to update user', error });
     }
 });
+
+
 
 router.delete('/:id', async (req: any, res: Response) => {
     try {
@@ -302,10 +431,61 @@ router.get('/clients/:id', authenticateJWT, async (req: Request, res: Response) 
         if (!client) {
             return res.status(404).json({ message: 'Client not found' });
         }
+        
+        // const user = await Users.findOne({ where: { id: client.userID }, relations: ['user'] });
+        // if (!client) {
+        //     return res.status(404).json({ message: 'Client not found' });
+        // }
 
         res.status(200).json(client);
     } catch (error) {
         res.status(500).json({ message: 'Unable to fetch client', error });
+    }
+});
+
+router.get('/clients/:clientId/trainers', async (req, res) => {
+    const { clientId } = req.params;
+
+    try {
+        // Fetch client with trainers
+        const client = await Clients.createQueryBuilder('client')
+            .leftJoinAndSelect('client.trainers', 'trainer')
+            .leftJoinAndSelect('trainer.user', 'user') // Include user data
+            .where('client.id = :id', { id: clientId })
+            .getOne();
+
+        if (!client) {
+            return res.status(404).json({ message: 'Client not found' });
+        }
+
+        // Return the trainers
+        res.status(200).json({ trainers: client.trainers });
+    } catch (error) {
+        console.error('Error fetching client trainers:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+router.get('/trainers/:trainerId/clients', async (req, res) => {
+    const { trainerId } = req.params;
+
+    try {
+        // Fetch trainer with clients
+        const trainer = await Trainers.createQueryBuilder('trainer')
+            .leftJoinAndSelect('trainer.clients', 'client')
+            .leftJoinAndSelect('client.user', 'user') // Include user data
+            .where('trainer.id = :id', { id: trainerId })
+            .getOne();
+
+        if (!trainer) {
+            return res.status(404).json({ message: 'Trainer not found' });
+        }
+
+        // Return the clients
+        res.status(200).json({ clients: trainer.clients });
+    } catch (error) {
+        console.error('Error fetching trainer clients:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

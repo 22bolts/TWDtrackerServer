@@ -148,9 +148,17 @@ router.post('/validate-and-create-session', async (req, res) => {
         if (!client.trainers) client.trainers = [];
         if (!trainer.clients) trainer.clients = [];
 
-        // Add trainer to client's trainers list and vice versa
-        client.trainers.push(trainer);
-        trainer.clients.push(client);
+        // Add trainer to client's trainers list if not already present
+        const isTrainerAlreadyAdded = client.trainers.some(t => t.id === trainer.id);
+        if (!isTrainerAlreadyAdded) {
+            client.trainers.push(trainer);
+        }
+
+        // Add client to trainer's clients list if not already present
+        const isClientAlreadyAdded = trainer.clients.some(c => c.id === client.id);
+        if (!isClientAlreadyAdded) {
+            trainer.clients.push(client);
+        }
 
         // Save updated relationships
         await client.save();
@@ -176,6 +184,7 @@ router.post('/validate-and-create-session', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 // router.post('/validate', async (req, res) => {
 //     const { email, otp } = req.body;
