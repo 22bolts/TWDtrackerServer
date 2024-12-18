@@ -29,9 +29,6 @@ export class Users extends BaseEntity {
     @Column({ nullable: true })
     avatar!: string;
 
-    @Column({ type: 'json', default: {} })
-    unreadMessages!: { [chatId: string]: number };
-
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     created_at!: Date;
 

@@ -7,8 +7,8 @@ export class Clients extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
-    userID!: number;
+    // @Column()
+    // userID!: number;
 
     @OneToOne(() => Users, (user) => user.client)
     @JoinColumn({ name: 'userID' })

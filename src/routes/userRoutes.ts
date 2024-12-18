@@ -68,7 +68,7 @@ router.post('/signup', async (req: Request, res: Response) => {
 
         if(role == "client"){
             const client = Clients.create({
-                userID: user.id,
+                // userID: user.id,
                 user: user,
                 phone: phone_number
             });
@@ -76,7 +76,7 @@ router.post('/signup', async (req: Request, res: Response) => {
             await client.save();
         }else if(role == "employee"){
             const employee = Employees.create({
-                userID: user.id,
+                // userID: user.id,
                 user: user,
                 position: position || "default position",
                 salary
@@ -86,7 +86,7 @@ router.post('/signup', async (req: Request, res: Response) => {
         }
         else if(role == "trainer"){
             const employee = Trainers.create({
-                userID: user.id,
+                // userID: user.id,
                 user: user,
             });
     

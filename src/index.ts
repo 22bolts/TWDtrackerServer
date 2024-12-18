@@ -29,21 +29,43 @@ const chatBasePath = path.join(__dirname, '..', 'chatMessages');
 // Load environment variables
 dotenv.config();
 
+// const connectDB = async () => {
+//     try {
+//         await createConnection({
+//             type: 'postgres',
+//             host: 'svgjfhsqggolnipsgzjz.db.eu-central-1.nhost.run', // Extracted from the connection string
+//             port: 5432, // Default PostgreSQL port
+//             username: 'postgres', // From the connection string
+//             password: 'bD73V7JGVap2s5pr', // Replace with the actual password from your connection string
+//             database: 'svgjfhsqggolnipsgzjz', // From the connection string
+//             entities: [
+//                 Employees, Trainers, Users, Clients, OTP, Sessions
+//             ],
+//             synchronize: false, // Set to false in production
+//             logging: false,
+//             schema: "public"
+//         });
+//         console.log('Database connected');
+//     } catch (error) {
+//         console.error('Database connection error:', error);
+//         process.exit(1); // Exit process with failure
+//     }
+// };
+
 const connectDB = async () => {
     try {
         await createConnection({
-            type: 'postgres',
-            host: 'svgjfhsqggolnipsgzjz.db.eu-central-1.nhost.run', // Extracted from the connection string
-            port: 5432, // Default PostgreSQL port
-            username: 'postgres', // From the connection string
-            password: 'bD73V7JGVap2s5pr', // Replace with the actual password from your connection string
-            database: 'svgjfhsqggolnipsgzjz', // From the connection string
+            type: 'mysql', // Change to 'mysql' since you're using MySQL, not PostgreSQL
+            host: 'localhost', // Use localhost if hosted on the same server
+            port: 3306, // Default MySQL port
+            username: 'u400199273_app_superadmin', // Your MySQL user
+            password: 'Hg$Xdriu4', // Replace with your actual password
+            database: 'u400199273_twdtracker_db', // Your database name
             entities: [
                 Employees, Trainers, Users, Clients, OTP, Sessions
             ],
-            synchronize: false, // Set to false in production
-            logging: false,
-            schema: "public"
+            synchronize: false, // Set to false in production to avoid auto-creating tables
+            logging: true
         });
         console.log('Database connected');
     } catch (error) {

@@ -7,8 +7,8 @@ export class Trainers extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
-    userID!: number; // Foreign Key referencing Users table
+    // @Column()
+    // userID!: number; // Foreign Key referencing Users table
 
     @OneToOne(() => Users, user => user.employee)
     @JoinColumn()
