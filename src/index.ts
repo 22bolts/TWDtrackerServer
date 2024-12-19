@@ -56,7 +56,7 @@ const connectDB = async () => {
     try {
         await createConnection({
             type: 'mysql', // Change to 'mysql' since you're using MySQL, not PostgreSQL
-            host: 'localhost', // Use localhost if hosted on the same server
+            host: 'srv1770.hstgr.io', // Use localhost if hosted on the same server
             port: 3306, // Default MySQL port
             username: 'u400199273_app_superadmin', // Your MySQL user
             password: 'Hg$Xdriu4', // Replace with your actual password
@@ -182,8 +182,9 @@ io.on('connection', (socket) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, async () => {
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
+
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
     await connectDB();
 });
