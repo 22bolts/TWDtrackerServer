@@ -20,6 +20,12 @@ export class Users extends BaseEntity {
     @Column({ nullable: true })
     phone_number!: string;
 
+    @Column({ default: 0 })
+    purchased!: number;
+
+    @Column({ default: 0 })
+    completed!: number;
+
     @Column()
     role!: string; // 'client', 'employee', 'freelancer'
 

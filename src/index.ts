@@ -23,6 +23,7 @@ import { Trainers } from './Entities/Trainers';
 import { OTP } from './Entities/OTP';
 import { Sessions } from './Entities/Sessions';
 import { sessionRouter } from './routes/sessionsRoutes';
+import { PasswordOTP } from './Entities/PasswordOTP';
 
 const chatBasePath = path.join(__dirname, '..', 'chatMessages');
 
@@ -62,7 +63,7 @@ const connectDB = async () => {
             password: 'Hg$Xdriu4', // Replace with your actual password
             database: 'u400199273_twdtracker_db', // Your database name
             entities: [
-                Employees, Trainers, Users, Clients, OTP, Sessions
+                Employees, Trainers, Users, Clients, OTP, Sessions, PasswordOTP
             ],
             synchronize: false, // Set to false in production to avoid auto-creating tables
             logging: true
@@ -140,7 +141,7 @@ app.post('/get-token', (req, res) => {
 
 // Default route
 app.get('/', (req: Request, res: Response) => {
-    res.send('Welcome to EverythingCodes API');
+    res.send('Welcome to TWDTracker API endpoint');
 });
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
