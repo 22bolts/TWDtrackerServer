@@ -638,6 +638,7 @@ router.get('/role/trainers', async (req: Request, res: Response) => {
     }
 });
 
+
 // Get all clients with user details
 router.get('/role/clients', async (req: Request, res: Response) => {
     try {
