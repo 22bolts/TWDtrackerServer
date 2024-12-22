@@ -617,7 +617,8 @@ router.get('/role/trainers', async (req: Request, res: Response) => {
                 'user.full_name',
                 'user.phone_number',
                 'user.avatar',
-                'user.role'
+                'user.role',
+                'user.completed'
             ])
             .getMany();
 
@@ -652,7 +653,9 @@ router.get('/role/clients', async (req: Request, res: Response) => {
                 'user.full_name',
                 'user.phone_number',
                 'user.avatar',
-                'user.role'
+                'user.role',
+                'user.purchased',
+                'user.completed'
             ])
             .getMany();
 
@@ -691,7 +694,9 @@ router.get('/role/clients/:id', async (req: Request, res: Response) => {
                 'user.full_name',
                 'user.phone_number',
                 'user.avatar',
-                'user.role'
+                'user.role',
+                'user.purchased',
+                'user.completed'
             ])
             .where('client.id = :id', { id: clientId })
             .getOne();
@@ -730,7 +735,8 @@ router.get('/role/trainers/:id', async (req: Request, res: Response) => {
                 'user.full_name',
                 'user.phone_number',
                 'user.avatar',
-                'user.role'
+                'user.role',
+                'user.completed'
             ])
             .where('trainer.id = :id', { id: trainerId })
             .getOne();
