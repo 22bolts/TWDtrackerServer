@@ -547,13 +547,38 @@ router.post('/set-pin', async (req, res) => {
     }
 });
 
-// Route to get all employees
-router.get('/employees', async (req: Request, res: Response) => {
+// Get all employees with user details
+router.get('/role/employees', async (req: Request, res: Response) => {
     try {
-        const employees = await Employees.find({ relations: ['user'] });
-        res.status(200).json(employees);
+        const employees = await Employees.createQueryBuilder('employee')
+            .leftJoinAndSelect('employee.user', 'user')
+            .select([
+                'employee.id',
+                'employee.position',
+                'employee.salary',
+                'user.id',
+                'user.email',
+                'user.full_name',
+                'user.phone_number',
+                'user.avatar',
+                'user.role'
+            ])
+            .getMany();
+
+        if (!employees.length) {
+            return res.status(200).json({ message: 'No employees found', data: [] });
+        }
+
+        res.status(200).json({
+            message: 'Employees retrieved successfully',
+            data: employees
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Unable to fetch employees', error });
+        console.error('Error fetching employees:', error);
+        res.status(500).json({ 
+            message: 'Unable to fetch employees',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
     }
 });
 
@@ -580,76 +605,159 @@ router.get('/employees/:id', async (req: Request, res: Response) => {
     }
 });
 
-// Route to get all trainers
-router.get('/trainers', async (req: Request, res: Response) => {
+// Get all trainers with user details
+router.get('/role/trainers', async (req: Request, res: Response) => {
     try {
-        const trainers = await Trainers.find({ relations: ['user'] });
-        res.status(200).json(trainers);
-    } catch (error) {
-        res.status(500).json({ message: 'Unable to fetch trainers', error });
-    }
-});
+        const trainers = await Trainers.createQueryBuilder('trainer')
+            .leftJoinAndSelect('trainer.user', 'user')
+            .select([
+                'trainer.id',
+                'user.id',
+                'user.email',
+                'user.full_name',
+                'user.phone_number',
+                'user.avatar',
+                'user.role'
+            ])
+            .getMany();
 
-// Route to get all clients
-router.get('/clients', async (req: Request, res: Response) => {
-    try {
-        const clients = await Clients.find({ relations: ['user'] });
-        res.status(200).json(clients);
-    } catch (error) {
-        res.status(500).json({ message: 'Unable to fetch clients', error });
-    }
-});
-
-// Route to get a single trainer by ID
-router.get('/trainers/:id', async (req: Request, res: Response) => {
-    try {
-        const trainerId = parseInt(req.params.id, 10);
-        if (isNaN(trainerId)) {
-            return res.status(400).json({ message: 'Invalid trainer ID' });
+        if (!trainers.length) {
+            return res.status(200).json({ message: 'No trainers found', data: [] });
         }
 
-        const trainer = await Trainers.findOne({ where: { id: trainerId }, relations: ['user'] });
-        if (!trainer) {
-            return res.status(404).json({ message: 'Trainer not found' });
-        }
-
-        res.status(200).json(trainer);
+        res.status(200).json({
+            message: 'Trainers retrieved successfully',
+            data: trainers
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Unable to fetch trainer', error });
+        console.error('Error fetching trainers:', error);
+        res.status(500).json({ 
+            message: 'Unable to fetch trainers',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
     }
 });
 
-// Route to get a single client by ID
-router.get('/clients/:id', async (req: Request, res: Response) => {
+// Get all clients with user details
+router.get('/role/clients', async (req: Request, res: Response) => {
+    try {
+        const clients = await Clients.createQueryBuilder('client')
+            .leftJoinAndSelect('client.user', 'user')
+            .select([
+                'client.id',
+                'client.phone',
+                'user.id',
+                'user.email',
+                'user.full_name',
+                'user.phone_number',
+                'user.avatar',
+                'user.role'
+            ])
+            .getMany();
+
+        if (!clients.length) {
+            return res.status(200).json({ message: 'No clients found', data: [] });
+        }
+
+        res.status(200).json({
+            message: 'Clients retrieved successfully',
+            data: clients
+        });
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        res.status(500).json({ 
+            message: 'Unable to fetch clients',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
+    }
+});
+
+// Get single client by ID
+router.get('/role/clients/:id', async (req: Request, res: Response) => {
     try {
         const clientId = parseInt(req.params.id, 10);
         if (isNaN(clientId)) {
             return res.status(400).json({ message: 'Invalid client ID' });
         }
 
-        const client = await Clients.findOne({ where: { id: clientId }, relations: ['user'] });
+        const client = await Clients.createQueryBuilder('client')
+            .leftJoinAndSelect('client.user', 'user')
+            .select([
+                'client.id',
+                'client.phone',
+                'user.id',
+                'user.email',
+                'user.full_name',
+                'user.phone_number',
+                'user.avatar',
+                'user.role'
+            ])
+            .where('client.id = :id', { id: clientId })
+            .getOne();
+
         if (!client) {
             return res.status(404).json({ message: 'Client not found' });
         }
-        
-        // const user = await Users.findOne({ where: { id: client.userID }, relations: ['user'] });
-        // if (!client) {
-        //     return res.status(404).json({ message: 'Client not found' });
-        // }
 
-        res.status(200).json(client);
+        res.status(200).json({
+            message: 'Client retrieved successfully',
+            data: client
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Unable to fetch client', error });
+        console.error('Error fetching client:', error);
+        res.status(500).json({ 
+            message: 'Unable to fetch client',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
     }
 });
 
-router.get('/clients/:userId/trainers', async (req, res) => {
+// Get single trainer by ID
+router.get('/role/trainers/:id', async (req: Request, res: Response) => {
+    try {
+        const trainerId = parseInt(req.params.id, 10);
+        if (isNaN(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainer ID' });
+        }
+
+        const trainer = await Trainers.createQueryBuilder('trainer')
+            .leftJoinAndSelect('trainer.user', 'user')
+            .select([
+                'trainer.id',
+                'user.id',
+                'user.email',
+                'user.full_name',
+                'user.phone_number',
+                'user.avatar',
+                'user.role'
+            ])
+            .where('trainer.id = :id', { id: trainerId })
+            .getOne();
+
+        if (!trainer) {
+            return res.status(404).json({ message: 'Trainer not found' });
+        }
+
+        res.status(200).json({
+            message: 'Trainer retrieved successfully',
+            data: trainer
+        });
+    } catch (error) {
+        console.error('Error fetching trainer:', error);
+        res.status(500).json({ 
+            message: 'Unable to fetch trainer',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
+    }
+});
+
+// Update the client-trainer relationship endpoints
+router.get('/role/clients/:userId/trainers', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        // Fetch the client ID from the Users table
         const user = await Users.createQueryBuilder('user')
-            .leftJoinAndSelect('user.client', 'client') // Join client
+            .leftJoinAndSelect('user.client', 'client')
             .where('user.id = :id', { id: userId })
             .getOne();
 
@@ -659,10 +767,9 @@ router.get('/clients/:userId/trainers', async (req, res) => {
 
         const clientId = user.client.id;
 
-        // Fetch trainers for the client
         const client = await Clients.createQueryBuilder('client')
             .leftJoinAndSelect('client.trainers', 'trainer')
-            .leftJoinAndSelect('trainer.user', 'user') // Include user data
+            .leftJoinAndSelect('trainer.user', 'user')
             .where('client.id = :id', { id: clientId })
             .getOne();
 
@@ -677,13 +784,12 @@ router.get('/clients/:userId/trainers', async (req, res) => {
     }
 });
 
-router.get('/trainers/:userId/clients', async (req, res) => {
+router.get('/role/trainers/:userId/clients', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        // Fetch the trainer ID from the Users table
         const user = await Users.createQueryBuilder('user')
-            .leftJoinAndSelect('user.trainer', 'trainer') // Join trainer
+            .leftJoinAndSelect('user.trainer', 'trainer')
             .where('user.id = :id', { id: userId })
             .getOne();
 
@@ -693,10 +799,9 @@ router.get('/trainers/:userId/clients', async (req, res) => {
 
         const trainerId = user.trainer.id;
 
-        // Fetch clients for the trainer
         const trainer = await Trainers.createQueryBuilder('trainer')
             .leftJoinAndSelect('trainer.clients', 'client')
-            .leftJoinAndSelect('client.user', 'user') // Include user data
+            .leftJoinAndSelect('client.user', 'user')
             .where('trainer.id = :id', { id: trainerId })
             .getOne();
 
