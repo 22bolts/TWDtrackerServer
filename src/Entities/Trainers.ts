@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToOne, JoinColumn, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToOne, JoinColumn, ManyToMany, OneToMany } from 'typeorm';
 import { Users } from './Users';
 import { Clients } from './Clients';
+import { Sessions } from './Sessions';
 
 @Entity()
 export class Trainers extends BaseEntity {
@@ -9,6 +10,9 @@ export class Trainers extends BaseEntity {
 
     // @Column()
     // userID!: number; // Foreign Key referencing Users table
+    
+    @Column()
+    gym!: string;
 
     @OneToOne(() => Users, user => user.employee)
     @JoinColumn()
@@ -16,4 +20,7 @@ export class Trainers extends BaseEntity {
     
     @ManyToMany(() => Clients, (client) => client.trainers)
     clients!: Clients[];
+
+    @OneToMany(() => Sessions, (session) => session.trainer)
+    sessions!: Sessions[];
 }

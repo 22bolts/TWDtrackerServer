@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToOne, JoinColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { Users } from './Users';
 import { Trainers } from './Trainers';
+import { Sessions } from './Sessions';
 
 @Entity()
 export class Clients extends BaseEntity {
@@ -28,4 +29,8 @@ export class Clients extends BaseEntity {
         inverseJoinColumn: { name: 'trainer_id', referencedColumnName: 'id' },
     })
     trainers!: Trainers[];
+
+
+    @OneToMany(() => Sessions, (session) => session.client)
+    sessions!: Sessions[];
 }

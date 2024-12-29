@@ -1,10 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity, ManyToOne, JoinColumn } from 'typeorm';
+import { Clients } from './Clients';
+import { Trainers } from './Trainers';
 
 @Entity()
 export class Sessions extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
     
+    @ManyToOne(() => Clients, (client) => client.sessions, { eager: true })
+    @JoinColumn({ name: 'clientId' }) // Maps clientId to Clients entity
+    client!: Clients;
+
+    @ManyToOne(() => Trainers, (trainer) => trainer.sessions, { eager: true })
+    @JoinColumn({ name: 'trainerId' }) // Maps trainerId to Trainers entity
+    trainer!: Trainers;
+
     @Column()
     clientId!: number;
 
@@ -13,6 +23,9 @@ export class Sessions extends BaseEntity {
 
     @Column()
     email!: string;
+    
+    @Column()
+    gym!: string;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     startedAt!: Date;

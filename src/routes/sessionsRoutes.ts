@@ -3,9 +3,11 @@ import { OTP } from '../Entities/OTP';
 import { Users } from '../Entities/Users';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import { Client, Environment, ApiError } from 'square';
 import { Sessions } from '../Entities/Sessions';
 import { Clients } from '../Entities/Clients';
 import { Trainers } from '../Entities/Trainers';
+import { Payments } from '../Entities/Payments';
 
 const router = Router();
 
@@ -18,48 +20,32 @@ setInterval(async () => {
     console.log('Expired OTPs cleaned up');
 }, 5 * 60 * 1000);
 
-// Generate OTP
-// router.post('/generate', async (req, res) => {
-//     const { email } = req.body;
+const squareClient = new Client({
+    accessToken: process.env.SQUARE_ACCESS_TOKEN,
+    environment: Environment.Production
+});
 
-//     if (!email) {
-//         return res.status(400).json({ message: 'Email are required' });
-//     }
+router.get('/all-sessions', async (req, res) => {
+    try {
+        // Fetch all sessions with related client and trainer data
+        const sessions = await Sessions.createQueryBuilder('session')
+            .leftJoinAndSelect('session.client', 'client') // Assuming `client` is a relation in Sessions
+            .leftJoinAndSelect('client.user', 'clientUser') // Assuming `user` is a relation in Clients
+            .leftJoinAndSelect('session.trainer', 'trainer') // Assuming `trainer` is a relation in Sessions
+            .leftJoinAndSelect('trainer.user', 'trainerUser') // Assuming `user` is a relation in Trainers
+            .orderBy('session.startedAt', 'DESC')
+            .getMany();
 
-//     try {
-//         const client = await Clients.createQueryBuilder('client')
-//             .innerJoinAndSelect('client.user', 'user')
-//             .where('user.email = :email', { email })
-//             .getOne();
+        if (sessions.length === 0) {
+            return res.status(404).json({ message: 'No sessions found' });
+        }
 
-//         if (!client) {
-//             return res.status(404).json({ message: 'Client not found' });
-//         }
-
-//         // const trainer = await Trainers.createQueryBuilder('trainer')
-//         //     .innerJoinAndSelect('trainer.user', 'user')
-//         //     .where('user.email = :email', { email: trainerEmail })
-//         //     .getOne();
-
-//         // if (!trainer) {
-//         //     return res.status(404).json({ message: 'Trainer not found' });
-//         // }
-
-//         const otp = crypto.randomInt(100000, 999999).toString(); // 6-digit OTP
-//         const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes from now
-
-//         const newOTP = OTP.create({ email, otp, expiresAt });
-//         await newOTP.save();
-
-//         // Simulate sending OTP (Replace with real email service)
-//         console.log(`OTP for client ${email}: ${otp}`);
-
-//         res.status(200).json({ message: 'OTP generated and sent to email', otp });
-//     } catch (error) {
-//         console.error('Error generating OTP:', error);
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// });
+        res.status(200).json({ message: 'All sessions retrieved successfully', sessions });
+    } catch (error) {
+        console.error('Error fetching all sessions:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 // Generate OTP
 router.post('/generate', async (req, res) => {
@@ -186,77 +172,6 @@ router.post('/validate-and-create-session', async (req, res) => {
 });
 
 
-// router.post('/validate', async (req, res) => {
-//     const { email, otp } = req.body;
-
-//     if (!email || !otp) {
-//         return res.status(400).json({ message: 'Email and OTP are required' });
-//     }
-
-//     try {
-//         // Verify the OTP
-//         const validOTP = await OTP.findOne({ where: { email, otp } });
-
-//         if (!validOTP) {
-//             return res.status(400).json({ message: 'Invalid OTP' });
-//         }
-
-//         if (validOTP.expiresAt < new Date()) {
-//             await OTP.delete({ id: validOTP.id });
-//             return res.status(400).json({ message: 'OTP expired' });
-//         }
-
-//         // Fetch trainer email from OTP record
-//         const trainerEmail = validOTP.trainerEmail;
-
-//         if (!trainerEmail) {
-//             return res.status(400).json({ message: 'Trainer email not found in OTP' });
-//         }
-
-//         // Delete the OTP (used or validated)
-//         await OTP.delete({ id: validOTP.id });
-
-//         // Check if both client and trainer exist
-//         const client = await Clients.createQueryBuilder('client')
-//             .innerJoinAndSelect('client.user', 'user')
-//             .where('user.email = :email', { email })
-//             .getOne();
-
-//         const trainer = await Trainers.createQueryBuilder('trainer')
-//             .innerJoinAndSelect('trainer.user', 'user')
-//             .where('user.email = :email', { email: trainerEmail })
-//             .getOne();
-
-//         if (!client || !trainer) {
-//             return res.status(404).json({ message: 'Client or Trainer not found' });
-//         }
-
-//         // Add trainer to client's trainers list and client to trainer's clients list
-//         client.trainers = [...client.trainers, trainer];
-//         trainer.clients = [...trainer.clients, client];
-
-//         // Save updated client and trainer entities
-//         await client.save();
-//         await trainer.save();
-
-//         // Create a new session record
-//         const session = await Sessions.create({
-//             clientId: client.id,
-//             trainerId: trainer.id,
-//             email: email,
-//             trainerEmail: trainerEmail,
-//             startedAt: new Date(), // Mark session start time
-//         });
-//         await session.save();
-
-//         res.status(200).json({ message: 'OTP validated and session started successfully', session });
-//     } catch (error) {
-//         console.error('Error validating OTP:', error);
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// });
-
-
 router.post('/confirm-session', async (req, res) => {
     const { email, sessionId, pin } = req.body;
 
@@ -380,6 +295,201 @@ router.get('/user-sessions/:email', async (req, res) => {
         res.status(200).json({ message: 'Sessions retrieved successfully', sessions });
     } catch (error) {
         console.error('Error fetching user sessions:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+router.post('/purchase-session', async (req, res) => {
+    const { userId, amount = 1 } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    try {
+        // Find the user
+        const user = await Users.findOne({ where: { id: userId } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Increment the purchase count
+        user.purchased = (user.purchased || 0) + amount;
+        await user.save();
+
+        res.status(200).json({ 
+            message: 'Purchase count updated successfully',
+            user: {
+                id: user.id,
+                purchased: user.purchased
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating purchase count:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+router.post('/process-payment', async (req, res) => {
+    const { sessionId, paymentSourceId, amount } = req.body;
+
+    try {
+        // 1. Get session details
+        const session = await Sessions.findOne({ 
+            where: { id: sessionId }
+        });
+
+        if (!session) {
+            return res.status(404).json({ message: 'Session not found' });
+        }
+
+        // 2. Create payment record
+        const paymentRecord = Payments.create({
+            sessionId: session.id,
+            clientId: session.clientId,
+            trainerId: session.trainerId,
+            amount: amount / 100, // Convert cents to dollars for storage
+            gym: session.gym,
+            status: 'pending',
+            note: `Training session payment for ${session.email}`
+        });
+        await paymentRecord.save();
+
+        // 3. Process payment through Square
+        const squarePayment = {
+            sourceId: paymentSourceId,
+            amountMoney: {
+                amount: amount, // Amount in cents
+                currency: 'USD'
+            },
+            idempotencyKey: `${sessionId}-${Date.now()}`,
+            note: paymentRecord.note,
+            metadata: {
+                paymentId: paymentRecord.id.toString(),
+                sessionId: sessionId.toString(),
+                clientEmail: session.email,
+                trainerEmail: session.trainerEmail
+            }
+        };
+
+        const { result } = await squareClient.paymentsApi.createPayment(squarePayment);
+
+        // 4. Update payment record with Square data
+        paymentRecord.squarePaymentId = result.payment?.id ?? "";
+
+        paymentRecord.status = 'completed';
+        paymentRecord.processedAt = new Date();
+        paymentRecord.squareData = result.payment;
+        await paymentRecord.save();
+
+        // 5. Update session status
+        session.status = 'completed';
+        session.completedAt = new Date();
+        await session.save();
+
+        // 6. Increment client's purchase count
+        const client = await Clients.createQueryBuilder('client')
+            .innerJoinAndSelect('client.user', 'user')
+            .where('client.id = :clientId', { clientId: session.clientId })
+            .getOne();
+
+        if (client && client.user) {
+            client.user.purchased = (client.user.purchased || 0) + 1;
+            await client.user.save();
+        }
+
+        res.status(200).json({ 
+            message: 'Payment processed successfully',
+            payment: paymentRecord,
+            session
+        });
+
+    } catch (error) {
+        console.error('Payment processing error:', error);
+        if (error instanceof ApiError) {
+            // Update payment record to failed if it exists
+            const failedPayment = await Payments.findOne({ 
+                where: { sessionId }
+            });
+            if (failedPayment) {
+                failedPayment.status = 'failed';
+                failedPayment.squareData = error.result;
+                await failedPayment.save();
+            }
+
+            res.status(400).json({ 
+                message: 'Payment processing failed',
+                error: error.result 
+            });
+        } else {
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+});
+
+router.post('/square-webhook', async (req, res) => {
+    const { type, data } = req.body;
+
+    try {
+        switch (type) {
+            case 'payment.updated': {
+                const squarePayment = data.object.payment;
+                const paymentId = squarePayment.metadata?.paymentId;
+
+                if (paymentId) {
+                    const payment = await Payments.findOne({ 
+                        where: { id: parseInt(paymentId) }
+                    });
+
+                    if (payment) {
+                        payment.status = squarePayment.status.toLowerCase();
+                        payment.squareData = squarePayment;
+                        
+                        if (squarePayment.status === 'COMPLETED' && payment.status !== 'completed') {
+                            payment.processedAt = new Date();
+                            
+                            // Increment purchase count if not already done
+                            const client = await Clients.createQueryBuilder('client')
+                                .innerJoinAndSelect('client.user', 'user')
+                                .where('client.id = :clientId', { clientId: payment.clientId })
+                                .getOne();
+
+                            if (client && client.user) {
+                                client.user.purchased = (client.user.purchased || 0) + 1;
+                                await client.user.save();
+                            }
+                        }
+                        
+                        await payment.save();
+                    }
+                }
+                break;
+            }
+
+            case 'payment.failed': {
+                const squarePayment = data.object.payment;
+                const paymentId = squarePayment.metadata?.paymentId;
+
+                if (paymentId) {
+                    const payment = await Payments.findOne({ 
+                        where: { id: parseInt(paymentId) }
+                    });
+
+                    if (payment) {
+                        payment.status = 'failed';
+                        payment.squareData = squarePayment;
+                        await payment.save();
+                    }
+                }
+                break;
+            }
+        }
+
+        res.status(200).json({ message: 'Webhook processed' });
+    } catch (error) {
+        console.error('Webhook processing error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
