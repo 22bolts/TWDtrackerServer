@@ -150,7 +150,7 @@ router.post('/signup', async (req: Request, res: Response) => {
         const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
 
         res.json({ token, data:{id: user.id, full_name: user.full_name, email: user.email,
-            role: user.role, phone_number: user.phone_number, avatar: user.avatar} });
+            role: user.role, phone_number: user.phone_number, avatar: user.avatar, purchased: user.purchased} });
     } catch (error) {
         res.status(500).json({ message: 'Unable to create user', error });
     }
@@ -180,7 +180,7 @@ router.post('/signin', async (req: Request, res: Response) => {
         const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
 
         res.json({ token, data:{id: user.id, full_name: user.full_name, email: user.email,
-            role: user.role, phone_number: user.phone_number, avatar: user.avatar} });
+            role: user.role, phone_number: user.phone_number, avatar: user.avatar, purchased: user.purchased} });
     } catch (error) {
         res.status(500).json({ message: 'Unable to login', error });
         console.log("ERROR SIGNING IN:", error);
