@@ -424,6 +424,39 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/user/purchased-count/:userId', async (req: Request, res: Response) => {
+    try {
+        const userId = parseInt(req.params.userId, 10); // Convert string to number
+
+        // Validate if userId is provided and is a valid number
+        if (!userId || isNaN(userId)) {
+            return res.status(400).json({ message: 'Valid User ID is required' });
+        }
+
+        // Find the user and their purchase count
+        const user = await Users.findOne({
+            where: { id: userId },
+            select: ['id', 'purchased']
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Return the purchase count
+        res.json({ 
+            userId: user.id,
+            purchasedCount: user.purchased || 0
+        });
+
+    } catch (error: any) { // Type assertion for error
+        res.status(500).json({ 
+            message: 'Error fetching purchase count', 
+            error: error?.message || 'Unknown error'
+        });
+    }
+});
+
 router.put('/:id', upload.single('avatar'), async (req: Request, res: Response) => {
     try {
         const userId = parseInt(req.params.id, 10);
