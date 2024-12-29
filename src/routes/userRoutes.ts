@@ -324,7 +324,7 @@ router.post('/generate-reset-otp', async (req: Request, res: Response) => {
             
             return res.status(500).json({ 
                 message: 'Failed to send OTP email. Please try again later.',
-                error: process.env.NODE_ENV === 'development' ? emailError.message : emailError.message
+                error: process.env.NODE_ENV === 'development' ? emailError.message : undefined
             });
         }
     } catch (error) {
