@@ -127,6 +127,14 @@ router.post('/validate-and-create-session', async (req, res) => {
             return res.status(404).json({ message: 'Client not found' });
         }
 
+        // Decrease the purchased count for the client's user
+        if (client.user.purchased > 0) {
+            client.user.purchased -= 1;
+            await client.user.save();
+        } else {
+            return res.status(400).json({ message: 'No purchased sessions available' });
+        }
+
         // Delete the used OTP
         await OTP.delete({ id: validOTP.id });
 
@@ -211,6 +219,10 @@ router.post('/confirm-session', async (req, res) => {
         session.status = 'completed';
         session.completedAt = new Date();
         await session.save();
+
+        // Increment the completed sessions count
+        user.completed += 1;
+        await user.save();
 
         // Step 4: Fetch the client and trainer entities
         const client = await Clients.createQueryBuilder('client')
