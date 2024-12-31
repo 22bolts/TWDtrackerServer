@@ -581,7 +581,7 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
 // });
 
 // Route to verify existing PIN
-router.post('/verify-pin', async (req, res) => {
+router.post('/pin/verify-pin', async (req, res) => {
     const { email, pin } = req.body;
 
     if (!email || !pin) {
@@ -617,7 +617,7 @@ router.post('/verify-pin', async (req, res) => {
 });
 
 // Route to set initial PIN (keeping your existing route)
-router.post('/set-pin', async (req, res) => {
+router.post('/pin/set-pin', async (req, res) => {
     const { email, pin } = req.body;
 
     if (!email || !pin) {
@@ -647,7 +647,7 @@ router.post('/set-pin', async (req, res) => {
 });
 
 // Route to update existing PIN
-router.post('/update-pin', async (req, res) => {
+router.post('/pin/update-pin', async (req, res) => {
     const { email, currentPin, newPin } = req.body;
 
     if (!email || !currentPin || !newPin) {
