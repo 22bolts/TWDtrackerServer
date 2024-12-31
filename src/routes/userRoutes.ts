@@ -549,6 +549,74 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
     }
 });
 
+// router.post('/set-pin', async (req, res) => {
+//     const { email, pin } = req.body;
+
+//     if (!email || !pin) {
+//         return res.status(400).json({ message: 'Email and PIN are required' });
+//     }
+
+//     if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+//         return res.status(400).json({ message: 'PIN must be a 4-digit number' });
+//     }
+
+//     try {
+//         const user = await Users.findOne({ where: { email } });
+
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
+
+//         const hashedPin = await bcrypt.hash(pin, 10); // Hash the PIN with bcrypt
+
+//         user.hashedPin = hashedPin;
+
+//         await user.save();
+
+//         res.status(200).json({ message: 'PIN set successfully' });
+//     } catch (error) {
+//         console.error('Error setting PIN:', error);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// });
+
+// Route to verify existing PIN
+router.post('/verify-pin', async (req, res) => {
+    const { email, pin } = req.body;
+
+    if (!email || !pin) {
+        return res.status(400).json({ message: 'Email and PIN are required' });
+    }
+
+    if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+        return res.status(400).json({ message: 'PIN must be a 4-digit number' });
+    }
+
+    try {
+        const user = await Users.findOne({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.hashedPin) {
+            return res.status(400).json({ message: 'PIN not set for this user' });
+        }
+
+        const isPinValid = await bcrypt.compare(pin, user.hashedPin);
+
+        if (!isPinValid) {
+            return res.status(401).json({ message: 'Invalid PIN' });
+        }
+
+        res.status(200).json({ message: 'PIN verified successfully' });
+    } catch (error) {
+        console.error('Error verifying PIN:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Route to set initial PIN (keeping your existing route)
 router.post('/set-pin', async (req, res) => {
     const { email, pin } = req.body;
 
@@ -567,15 +635,55 @@ router.post('/set-pin', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const hashedPin = await bcrypt.hash(pin, 10); // Hash the PIN with bcrypt
-
+        const hashedPin = await bcrypt.hash(pin, 10);
         user.hashedPin = hashedPin;
-
         await user.save();
 
         res.status(200).json({ message: 'PIN set successfully' });
     } catch (error) {
         console.error('Error setting PIN:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Route to update existing PIN
+router.post('/update-pin', async (req, res) => {
+    const { email, currentPin, newPin } = req.body;
+
+    if (!email || !currentPin || !newPin) {
+        return res.status(400).json({ message: 'Email, current PIN, and new PIN are required' });
+    }
+
+    if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
+        return res.status(400).json({ message: 'New PIN must be a 4-digit number' });
+    }
+
+    try {
+        const user = await Users.findOne({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.hashedPin) {
+            return res.status(400).json({ message: 'No PIN currently set' });
+        }
+
+        // Verify current PIN
+        const isPinValid = await bcrypt.compare(currentPin, user.hashedPin);
+
+        if (!isPinValid) {
+            return res.status(401).json({ message: 'Current PIN is incorrect' });
+        }
+
+        // Hash and save new PIN
+        const hashedNewPin = await bcrypt.hash(newPin, 10);
+        user.hashedPin = hashedNewPin;
+        await user.save();
+
+        res.status(200).json({ message: 'PIN updated successfully' });
+    } catch (error) {
+        console.error('Error updating PIN:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
